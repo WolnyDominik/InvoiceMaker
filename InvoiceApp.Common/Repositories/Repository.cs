@@ -2,8 +2,10 @@ using System.ComponentModel.DataAnnotations.Schema;
 using System.Data.Common;
 using System.Reflection;
 using System.Text;
+using Microsoft.Extensions.Options;
 using Dapper;
 using InvoiceApp.Common.Models;
+using InvoiceApp.Common.Options;
 using Npgsql;
 
 namespace InvoiceApp.Common.Repositories;
@@ -46,18 +48,19 @@ public class Repository<TEntity> : IRepository<TEntity> where TEntity : EntityBa
     private readonly string _tableName;
     private readonly string _connString;
 
-    public Repository()
+    public Repository(IOptions<PostgresConfiguration> options)
     {
         foreach (var prop in typeof(TEntity).GetProperties())
             _propColNames[prop.Name] = prop.GetCustomAttributes<ColumnAttribute>()?.FirstOrDefault()?.Name ?? prop.Name;
         _tableName = typeof(TEntity).GetCustomAttributes<TableAttribute>()?.FirstOrDefault()?.Name ?? typeof(TEntity).Name;
+        _connString = options.Value.ToConnectionString();
     }
 
     public async Task<long> Insert(TEntity entity, DbConnection? connection = null, DbTransaction? transaction = null)
     {
         var query = _selectQuery;
         await using var conn = connection ?? await OpenConnectionAsync();
-        return await conn.QuerySingleAsync<long>(query, entity, transaction);
+        return await conn.QuerySingleOrDefaultAsync<long>(query, entity, transaction);
     }
 
     public IEnumerable<long> BatchInsert(IEnumerable<TEntity> entities, DbConnection? connection = null, DbTransaction? transaction = null)
@@ -90,21 +93,15 @@ public class Repository<TEntity> : IRepository<TEntity> where TEntity : EntityBa
     {
         string query = $"{_countQuery} {queryString}";
         await using var conn = connection ?? await OpenConnectionAsync();
-        return await conn.QueryFirstAsync<long>(query, param, transaction);
+        return await conn.QueryFirstOrDefaultAsync<long>(query, param, transaction);
     }
-
-    public async Task<TEntity> GetSingle(string queryString = "", DbConnection? connection = null, DbTransaction? transaction = null)
-        => await GetSingle(queryString, null, connection, transaction);
 
     public async Task<TEntity> GetSingle(string queryString = "", object param = null, DbConnection? connection = null, DbTransaction? transaction = null)
     {
         string query = $"{_selectQuery} {queryString}";
         await using var conn = connection ?? await OpenConnectionAsync();
-        return await conn.QueryFirstAsync<TEntity>(query, param, transaction);
+        return await conn.QueryFirstOrDefaultAsync<TEntity>(query, param, transaction);
     }
-
-    public async Task<IEnumerable<TEntity>> GetMany(string queryString = "", DbConnection? connection = null, DbTransaction? transaction = null)
-        => await GetMany(queryString, null, connection, transaction);
 
     public async Task<IEnumerable<TEntity>> GetMany(string queryString = "", object param = null, DbConnection? connection = null, DbTransaction? transaction = null)
     {

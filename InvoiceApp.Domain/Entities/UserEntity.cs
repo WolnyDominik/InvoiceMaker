@@ -1,7 +1,9 @@
+using System.ComponentModel.DataAnnotations.Schema;
 using InvoiceApp.Common.Models;
 
 namespace InvoiceApp.Domain.Entities
 {
+    [Table("Management.Users")]
     public class UserEntity : EntityBase
     {
         public string Email { get; set; } = null!;

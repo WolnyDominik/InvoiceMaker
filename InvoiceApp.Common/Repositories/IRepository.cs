@@ -13,8 +13,6 @@ public interface IRepository<TEntity> where TEntity : EntityBase
     Task<bool> Exists(string queryString = "", object param = null, DbConnection? connection = null, DbTransaction? transaction = null);
     Task<long> Count(string queryString = "", DbConnection? connection = null, DbTransaction? transaction = null);
     Task<long> Count(string queryString = "", object param = null, DbConnection? connection = null, DbTransaction? transaction = null);
-    Task<TEntity> GetSingle(string queryString = "", DbConnection? connection = null, DbTransaction? transaction = null);
     Task<TEntity> GetSingle(string queryString = "", object param = null, DbConnection? connection = null, DbTransaction? transaction = null);
-    Task<IEnumerable<TEntity>> GetMany(string queryString = "", DbConnection? connection = null, DbTransaction? transaction = null);
     Task<IEnumerable<TEntity>> GetMany(string queryString = "", object param = null, DbConnection? connection = null, DbTransaction? transaction = null);
 }

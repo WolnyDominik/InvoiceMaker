@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using InvoiceApp.Common.Repositories;
 using InvoiceApp.Domain.Entities;
 
 namespace InvoiceApp.Api.Controllers;
@@ -26,21 +27,23 @@ public class UsersController : ControllerBase
     };
 
     private readonly ILogger<UsersController> _logger;
+    private readonly IRepository<UserEntity> _userRepository;
 
-    public UsersController(ILogger<UsersController> logger)
+    public UsersController(
+        ILogger<UsersController> logger,
+        IRepository<UserEntity> userRepository)
     {
         _logger = logger;
+        _userRepository = userRepository;
     }
 
     [HttpGet]
-    public IActionResult GetMany()
-        => users.Any()
-            ? Ok(users)
-            : NoContent();
+    public async Task<IActionResult> GetMany()
+        => Ok(await _userRepository.GetMany());
     
     [HttpGet("{id}")]
-    public IActionResult GetSingle(long id)
-        => users.Where(u => u.Id == id).FirstOrDefault() is UserEntity user
+    public async Task<IActionResult> GetSingle(long id)
+        => await _userRepository.GetSingle("WHERE Id=@Id", new {Id = id}) is UserEntity user
             ? Ok(user)
             : NotFound(id);
 }
