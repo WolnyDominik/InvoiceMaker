@@ -41,7 +41,12 @@ public class Repository<TEntity> : IRepository<TEntity> where TEntity : EntityBa
 
     private string _insertQuery
     {
-        get => $"INSERT INTO {_tableName} ({string.Join(", ", _propColNames.Values)}) VALUES ({string.Join(", ", _propColNames.Keys.Select(k => $"@{k}"))}) RETURNING {_propColNames[nameof(EntityBase.Id)]}";
+        get => $@"
+            INSERT INTO {_tableName} 
+            ({string.Join(", ", _propColNames.Where(kvp => kvp.Key != nameof(EntityBase.Id)).Select(kvp => kvp.Value))}) 
+            VALUES 
+            ({string.Join(", ", _propColNames.Where(kvp => kvp.Key != nameof(EntityBase.Id)).Select(kvp => $"@{kvp.Key}"))}) 
+            RETURNING {_propColNames[nameof(EntityBase.Id)]}";
     }
 
     private readonly Dictionary<string, string> _propColNames = new();
@@ -58,7 +63,8 @@ public class Repository<TEntity> : IRepository<TEntity> where TEntity : EntityBa
 
     public async Task<long> Insert(TEntity entity, DbConnection? connection = null, DbTransaction? transaction = null)
     {
-        var query = _selectQuery;
+        var query = _insertQuery;
+        entity.CreatedOn = DateTime.UtcNow;
         await using var conn = connection ?? await OpenConnectionAsync();
         return await conn.QuerySingleOrDefaultAsync<long>(query, entity, transaction);
     }
@@ -69,6 +75,7 @@ public class Repository<TEntity> : IRepository<TEntity> where TEntity : EntityBa
     public async Task Update(TEntity entity, long id, DbConnection? connection = null, DbTransaction? transaction = null)
     {
         var query = $"{_updateQuery} WHERE {_propColNames[nameof(EntityBase.Id)]}=@{nameof(entity.Id)}";
+        entity.UpdatedOn = DateTime.UtcNow;
         await using var conn = connection ?? await OpenConnectionAsync();
         await conn.ExecuteAsync(query, entity, transaction);
     }

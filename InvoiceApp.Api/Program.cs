@@ -12,6 +12,8 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddSettings(configuration);
 builder.Services.AddRepositories();
+builder.Services.AddServices();
+builder.Services.AddAutoMapperProfiles();
 
 var app = builder.Build();
 
