@@ -5,4 +5,5 @@ namespace InvoiceApp.Infrastructure.Services;
 public interface IAuthenticationService
 {
     Task RegisterUser(NewUserDto newUser);
+    Task<bool> Login(LoginUserDto loginUser);
 }

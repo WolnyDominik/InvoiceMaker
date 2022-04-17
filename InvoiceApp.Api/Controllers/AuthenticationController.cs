@@ -18,5 +18,11 @@ namespace InvoiceApp.Api.Controllers
         [HttpPost(nameof(Register))]
         public async Task Register(NewUserDto newUser)
             => await _authService.RegisterUser(newUser);
+
+        [HttpPost(nameof(Login))]
+        public async Task<IActionResult> Login(LoginUserDto loginUser)
+            => await _authService.Login(loginUser)
+                ? Ok()
+                : Unauthorized("Email or password was incorrect");
     }
 }

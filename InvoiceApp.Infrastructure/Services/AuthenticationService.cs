@@ -28,4 +28,15 @@ public class AuthenticationService : IAuthenticationService
         newUser.Password = _hashService.HashPassword(newUser.Password);
         await _userRepository.Insert(_mapper.Map<UserEntity>(newUser));
     }
+
+    public async Task<bool> Login(LoginUserDto loginUser)
+    {
+        var dbUser = await _userRepository.GetSingle("WHERE Email=@Email", new { loginUser.Email });
+        if (dbUser is null)
+            return false;
+        (var validated, var needsRehash) = _hashService.VerifyHashedPassword(dbUser.Password, loginUser.Password);
+        if (needsRehash)
+            dbUser.Password = _hashService.HashPassword(loginUser.Password);
+        return validated;
+    }
 }
