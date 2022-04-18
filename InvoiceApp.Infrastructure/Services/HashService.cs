@@ -1,4 +1,5 @@
 using System.Security.Cryptography;
+using System.Text;
 using Microsoft.Extensions.Options;
 using InvoiceApp.Infrastructure.Extensions;
 using InvoiceApp.Infrastructure.Options;
@@ -22,7 +23,7 @@ public class HashService : IHashService
             password, _saltSize, _authOptions.Iterations, HashAlgorithmName.SHA512))
         {
             var key = Convert.ToBase64String(hasher.GetBytes(_keySize));
-            var salt = Convert.ToBase64String(hasher.GetBytes(_saltSize));
+            var salt = Convert.ToBase64String(hasher.Salt);
 
             return $"{_authOptions.IterationsBase64}.{key}.{salt}";
         }
@@ -33,9 +34,12 @@ public class HashService : IHashService
         if (elements.Length != 3)
             throw new FormatException("Expected format {iter}.{key}.{hash}");
         
-        var iterations = BitConverter.ToInt32(Convert.FromBase64String(elements[0]));
+        var parsed = int.TryParse(Encoding.Default.GetString(Convert.FromBase64String(elements[0])), out var iterations);
         var key = Convert.FromBase64String(elements[1]);
         var salt = Convert.FromBase64String(elements[2]);
+
+        if (!parsed)
+            throw new FormatException("Iterations failed to be decoded");
 
         using (var hasher = new Rfc2898DeriveBytes(
             password, salt, iterations, HashAlgorithmName.SHA512))
